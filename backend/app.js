@@ -4,7 +4,7 @@ bodyParser = require('body-parser'),
 cors = require('cors'),
 mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/mean', { useNewUrlParser: true }).then(
+mongoose.connect(`mongodb+srv://${process.env.USER_DB}:${process.env.PASS_DB}@coinkdb.igvwc.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`, { useNewUrlParser: true }).then(
   () => {console.log('Database is connected') },
   err => { console.log('Can not connect to the database'+ err)});
 
