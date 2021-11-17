@@ -1,0 +1,40 @@
+name: Deploy backend
+on:
+  workflow_run:
+    workflows: ["Build and push backend"]
+    types:
+      - "completed"
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Configure AWS credential
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2 
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    - uses: cschleiden/replace-tokens@v1
+      with:
+        files: 'backend-manifiest.yml'
+      env:
+        SHA: ${{ github.sha }}
+    - name: deploy to cluster (back)
+      uses: kodermax/kubectl-aws-eks@master
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      with:
+        args: apply -f backend-manifiest.yml
+    - name: verify deployment (back)
+      uses: kodermax/kubectl-aws-eks@master
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+      with:
+          args: rollout status deployment/coink-backend
